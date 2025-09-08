@@ -125,6 +125,163 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // void _openEventDetails(CalendarEvent<Event> event) {
+  //   showDialog(
+  //     context: context,
+  //     builder:
+  //         (context) => AlertDialog(
+  //           title: Text(event.data?.title ?? "No Title"),
+  //           content: Column(
+  //             mainAxisSize: MainAxisSize.min,
+  //             crossAxisAlignment: CrossAxisAlignment.start,
+  //             children: [
+  //               Text("Start: ${event.dateTimeRange.start}"),
+  //               Text("End: ${event.dateTimeRange.end}"),
+  //               const SizedBox(height: 8),
+  //               Text("Color:"),
+  //               Container(
+  //                 width: 30,
+  //                 height: 30,
+  //                 decoration: BoxDecoration(
+  //                   color: event.data?.color,
+  //                   shape: BoxShape.circle,
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //           actions: [
+  //             TextButton(
+  //               onPressed: () => Navigator.pop(context),
+  //               child: const Text("Close"),
+  //             ),
+  //           ],
+  //         ),
+  //   );
+  // }
+  void _openEventDetails(CalendarEvent<Event> event, BuildContext cntxt) {
+    showModalBottomSheet(
+      context: cntxt,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder:
+          (cntxt) => BlocProvider(
+            create: (cntxt) => HomeBloc(),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 5,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[400],
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                  Text(
+                    event.data?.title ?? "No Title",
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(Icons.access_time, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        "${event.dateTimeRange.start} - ${event.dateTimeRange.end}",
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(Icons.circle, size: 16),
+                      const SizedBox(width: 8),
+                      Text("Color:"),
+                      const SizedBox(width: 4),
+                      Container(
+                        width: 20,
+                        height: 20,
+                        decoration: BoxDecoration(
+                          color: event.data?.color,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          // TODO: Implement edit
+                          Navigator.pop(context);
+                        },
+                        icon: const Icon(Icons.edit),
+                        label: const Text("Edit"),
+                      ),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          // TODO: Implement delete
+                          context.read<HomeBloc>().add(
+                            RemoveCalendarEvent(event),
+                          );
+                          Navigator.pop(context);
+                        },
+                        icon: const Icon(Icons.delete),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                        ),
+                        label: const Text("Delete"),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
+            ),
+          ),
+    );
+  }
+
+  void _openEventsByDate(DateTime date) {
+    final events =
+        eventsController.events
+            .where(
+              (e) =>
+                  e.dateTimeRange.start.day == date.day &&
+                  e.dateTimeRange.start.month == date.month &&
+                  e.dateTimeRange.start.year == date.year,
+            )
+            .toList();
+
+    showModalBottomSheet(
+      context: context,
+      builder:
+          (context) => ListView.builder(
+            itemCount: events.length,
+            itemBuilder: (context, index) {
+              final event = events[index];
+              return ListTile(
+                title: Text(event.data?.title ?? "No title"),
+                subtitle: Text(
+                  "${event.dateTimeRange.start} - ${event.dateTimeRange.end}",
+                ),
+                onTap: () => _openEventDetails(event, context),
+              );
+            },
+          ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<HomeBloc, HomeState>(
@@ -152,6 +309,9 @@ class _HomeScreenState extends State<HomeScreen> {
       },
 
       builder: (context, state) {
+        if (state is CalendarLoaded) {
+          eventsController.addEvents(state.events);
+        }
         return Scaffold(
           appBar: AppBar(title: const Text('Calendar')),
           floatingActionButton: FloatingActionButton(
@@ -163,13 +323,16 @@ class _HomeScreenState extends State<HomeScreen> {
             calendarController: calendarController,
             viewConfiguration: viewConfiguration,
             callbacks: CalendarCallbacks<Event>(
-              onEventTapped:
-                  (event, _) => calendarController.selectEvent(event),
+              // onEventTapped:
+              //     (event, _) => calendarController.selectEvent(event),
               onEventCreate: (event) => event,
               onEventCreated: (event) {
                 eventsController.addEvent(event);
                 context.read<HomeBloc>().add(AddCalendarEvent(event));
               },
+              onEventTapped: (event, _) => _openEventDetails(event, context),
+              onMultiDayTapped:
+                  (dateRange) => (date, _) => _openEventsByDate(date),
             ),
             header: Material(
               color: Theme.of(context).colorScheme.surface,
@@ -249,16 +412,20 @@ TileComponents<Event> _tileComponents(
   bool body = true,
 }) {
   final color = Theme.of(context).colorScheme.primaryContainer;
-  final radius = BorderRadius.circular(8);
+  final radius = BorderRadius.circular(5);
 
   return TileComponents<Event>(
     tileBuilder: (event, _) {
-      return Card(
+      return Container(
+        decoration: BoxDecoration(
+          color: event.data?.color ?? color,
+          borderRadius: radius,
+        ),
         margin:
             body ? EdgeInsets.zero : const EdgeInsets.symmetric(vertical: 1),
-        color: event.data?.color ?? color,
+
         child: Padding(
-          padding: const EdgeInsets.all(4.0),
+          padding: const EdgeInsets.only(left: 4, right: 4),
           child: Text(event.data?.title ?? "No title"),
         ),
       );
