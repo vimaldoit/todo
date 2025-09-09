@@ -55,6 +55,30 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     // emit(CalendarLoaded(List.from(_events)));
   }
 
+  Future<void> _onToggleFavorite(
+    ToggleFavorite event,
+    Emitter<HomeState> emit,
+  ) async {
+    await repository.updateEventStatus(
+      userId: event.userId,
+      eventId: event.eventId,
+      isFavorite: event.isFavorite,
+    );
+    add(LoadEvents(event.userId));
+  }
+
+  Future<void> _onToggleBooking(
+    ToggleBooking event,
+    Emitter<HomeState> emit,
+  ) async {
+    await repository.updateEventStatus(
+      userId: event.userId,
+      eventId: event.eventId,
+      isBooked: event.isBooked,
+    );
+    add(LoadEvents(event.userId));
+  }
+
   // Future<void> _saveEvents() async {
   //   final prefs = await SharedPreferences.getInstance();
   //   final data =
