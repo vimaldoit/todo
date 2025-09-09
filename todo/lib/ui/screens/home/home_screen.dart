@@ -166,87 +166,84 @@ class _HomeScreenState extends State<HomeScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder:
-          (cntxt) => BlocProvider(
-            create: (cntxt) => HomeBloc(),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 5,
-                      margin: const EdgeInsets.only(bottom: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[400],
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+          (cntxt) => Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 5,
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[400],
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  Text(
-                    event.data?.title ?? "No Title",
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Icon(Icons.access_time, size: 20),
-                      const SizedBox(width: 8),
-                      Text(
-                        "${event.dateTimeRange.start} - ${event.dateTimeRange.end}",
+                ),
+                Text(
+                  event.data?.title ?? "No Title",
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.access_time, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      "${event.dateTimeRange.start} - ${event.dateTimeRange.end}",
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.circle, size: 16),
+                    const SizedBox(width: 8),
+                    Text("Color:"),
+                    const SizedBox(width: 4),
+                    Container(
+                      width: 20,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        color: event.data?.color,
+                        shape: BoxShape.circle,
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Icon(Icons.circle, size: 16),
-                      const SizedBox(width: 8),
-                      Text("Color:"),
-                      const SizedBox(width: 4),
-                      Container(
-                        width: 20,
-                        height: 20,
-                        decoration: BoxDecoration(
-                          color: event.data?.color,
-                          shape: BoxShape.circle,
-                        ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        // TODO: Implement edit
+                        Navigator.pop(context);
+                      },
+                      icon: const Icon(Icons.edit),
+                      label: const Text("Edit"),
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        // TODO: Implement delete
+                        context.read<HomeBloc>().add(
+                          RemoveCalendarEvent(event),
+                        );
+                        Navigator.pop(context);
+                      },
+                      icon: const Icon(Icons.delete),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          // TODO: Implement edit
-                          Navigator.pop(context);
-                        },
-                        icon: const Icon(Icons.edit),
-                        label: const Text("Edit"),
-                      ),
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          // TODO: Implement delete
-                          context.read<HomeBloc>().add(
-                            RemoveCalendarEvent(event),
-                          );
-                          Navigator.pop(context);
-                        },
-                        icon: const Icon(Icons.delete),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                        ),
-                        label: const Text("Delete"),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                ],
-              ),
+                      label: const Text("Delete"),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+              ],
             ),
           ),
     );
@@ -284,10 +281,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<HomeBloc, HomeState>(
+    return BlocListener<HomeBloc, HomeState>(
       listener: (context, state) {
         // TODO: implement listener
         if (state is CalendarLoaded) {
+          eventsController.clearEvents();
           eventsController.addEvents(state.events);
           //   eventsController.addEvents([
           //     CalendarEvent(
@@ -308,60 +306,54 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       },
 
-      builder: (context, state) {
-        if (state is CalendarLoaded) {
-          eventsController.addEvents(state.events);
-        }
-        return Scaffold(
-          appBar: AppBar(title: const Text('Calendar')),
-          floatingActionButton: FloatingActionButton(
-            onPressed: () => _openAddEventDialog(),
-            child: const Icon(Icons.add),
+      // builder: (context, state) {
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Calendar')),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () => _openAddEventDialog(),
+          child: const Icon(Icons.add),
+        ),
+        body: CalendarView<Event>(
+          eventsController: eventsController,
+          calendarController: calendarController,
+          viewConfiguration: viewConfiguration,
+          callbacks: CalendarCallbacks<Event>(
+            // onEventTapped:
+            //     (event, _) => calendarController.selectEvent(event),
+            onEventCreate: (event) => event,
+            onEventCreated: (event) {
+              eventsController.addEvent(event);
+              context.read<HomeBloc>().add(AddCalendarEvent(event));
+            },
+            onEventTapped: (event, _) => _openEventDetails(event, context),
+            onMultiDayTapped:
+                (dateRange) => (date, _) => _openEventsByDate(date),
           ),
-          body: CalendarView<Event>(
-            eventsController: eventsController,
-            calendarController: calendarController,
-            viewConfiguration: viewConfiguration,
-            callbacks: CalendarCallbacks<Event>(
-              // onEventTapped:
-              //     (event, _) => calendarController.selectEvent(event),
-              onEventCreate: (event) => event,
-              onEventCreated: (event) {
-                eventsController.addEvent(event);
-                context.read<HomeBloc>().add(AddCalendarEvent(event));
-              },
-              onEventTapped: (event, _) => _openEventDetails(event, context),
-              onMultiDayTapped:
-                  (dateRange) => (date, _) => _openEventsByDate(date),
-            ),
-            header: Material(
-              color: Theme.of(context).colorScheme.surface,
-              elevation: 2,
-              child: Column(
-                children: [
-                  _calendarToolbar(),
-                  CalendarHeader<Event>(
-                    multiDayTileComponents: _tileComponents(
-                      context,
-                      body: false,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            body: CalendarBody<Event>(
-              multiDayTileComponents: _tileComponents(context),
-              monthTileComponents: _tileComponents(context, body: false),
-              //   scheduleTileComponents: _scheduleTileComponents(context),
-              multiDayBodyConfiguration: MultiDayBodyConfiguration(
-                showMultiDayEvents: false,
-              ),
-              monthBodyConfiguration: MultiDayHeaderConfiguration(),
-              scheduleBodyConfiguration: ScheduleBodyConfiguration(),
+          header: Material(
+            color: Theme.of(context).colorScheme.surface,
+            elevation: 2,
+            child: Column(
+              children: [
+                _calendarToolbar(),
+                CalendarHeader<Event>(
+                  multiDayTileComponents: _tileComponents(context, body: false),
+                ),
+              ],
             ),
           ),
-        );
-      },
+          body: CalendarBody<Event>(
+            multiDayTileComponents: _tileComponents(context),
+            monthTileComponents: _tileComponents(context, body: false),
+            //   scheduleTileComponents: _scheduleTileComponents(context),
+            multiDayBodyConfiguration: MultiDayBodyConfiguration(
+              showMultiDayEvents: false,
+            ),
+            monthBodyConfiguration: MultiDayHeaderConfiguration(),
+            scheduleBodyConfiguration: ScheduleBodyConfiguration(),
+          ),
+        ),
+      ),
+      // },
     );
   }
 

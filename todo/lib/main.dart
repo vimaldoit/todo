@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:todo/data/db/event_db.dart';
+import 'package:todo/data/repository/event_repository.dart';
 import 'package:todo/ui/screens/home/home_bloc.dart';
 import 'package:todo/ui/screens/home/home_screen.dart';
 
@@ -33,10 +35,24 @@ class MyApp extends StatelessWidget {
         // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: BlocProvider(
-        create: (context) => HomeBloc(),
-        child: const HomeScreen(),
+      home: MultiRepositoryProvider(
+        providers: [
+          RepositoryProvider(
+            create: (_) => EventDatabase(),
+          ), // If DB is a singleton
+          RepositoryProvider(
+            create: (context) => EventRepository(context.read<EventDatabase>()),
+          ),
+        ],
+        child: BlocProvider(
+          create: (context) => HomeBloc(context.read<EventRepository>()),
+          child: HomeScreen(),
+        ),
       ),
+      // BlocProvider(
+      //   create: (context) => HomeBloc(),
+      //   child: const HomeScreen(),
+      // ),
     );
   }
 }
