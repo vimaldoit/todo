@@ -7,5 +7,6 @@ final class HomeInitial extends HomeState {}
 
 class CalendarLoaded extends HomeState {
   final List<CalendarEvent<EventData>> events;
-  CalendarLoaded(this.events);
+  final List<CalendarEvent<EventData>> favevents;
+  CalendarLoaded(this.events, {this.favevents = const []});
 }

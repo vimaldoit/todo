@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:kalender/kalender.dart';
+import 'package:todo/data/db/event_db.dart';
 import 'package:todo/data/model/event_model.dart';
 import 'package:todo/data/model/eventdata_model.dart';
+import 'package:todo/data/repository/event_repository.dart';
 
 class AddEventPopup extends StatefulWidget {
-  const AddEventPopup({super.key});
+  final bool editFlag;
+  final EventData? data;
+  const AddEventPopup({super.key, this.editFlag = false, this.data});
 
   @override
   State<AddEventPopup> createState() => _AddEventPopupState();
@@ -12,6 +16,7 @@ class AddEventPopup extends StatefulWidget {
 
 class _AddEventPopupState extends State<AddEventPopup> {
   final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
   DateTime? _startDate;
   DateTime? _endDate;
   Color _selectedColor = Colors.blue;
@@ -97,6 +102,7 @@ class _AddEventPopupState extends State<AddEventPopup> {
       dateTimeRange: DateTimeRange(start: startDateTime, end: endDateTime),
       data: EventData(
         title: _titleController.text,
+        description: _descriptionController.text,
         color: _selectedColor,
         start: startDateTime,
         end: endDateTime,
@@ -107,58 +113,89 @@ class _AddEventPopupState extends State<AddEventPopup> {
   }
 
   @override
+  void initState() {
+    // TODO: implement initState
+    if (widget.editFlag) {
+      // Load existing event data for editing
+      // For demonstration, using placeholder data
+      EventData edata = widget.data!;
+      _titleController.text = edata.title;
+      _descriptionController.text = edata.description ?? '';
+      _startDate = edata.start;
+      _endDate = edata.end;
+      _startTime = TimeOfDay.fromDateTime(edata.start);
+      _endTime = TimeOfDay.fromDateTime(edata.end);
+      _selectedColor = edata.color;
+    }
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text('Add Event'),
       content: SingleChildScrollView(
-        child: Column(
-          children: [
-            TextField(
-              controller: _titleController,
-              decoration: InputDecoration(labelText: 'Event Title'),
-            ),
-            SizedBox(height: 20),
-            TextButton.icon(
-              icon: Icon(Icons.date_range),
-              label: Text(
-                _startDate == null || _endDate == null
-                    ? 'Select Date Range'
-                    : '${_startDate!.toLocal().toString().split(' ')[0]} → ${_endDate!.toLocal().toString().split(' ')[0]}',
+        child: SizedBox(
+          height: MediaQuery.of(context).size.height * 0.5,
+          child: Column(
+            children: [
+              TextField(
+                controller: _titleController,
+                decoration: InputDecoration(labelText: 'Event Title'),
               ),
-              onPressed: _pickDateRange,
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: TextButton.icon(
-                    icon: const Icon(Icons.access_time),
-                    label: Text(
-                      _startTime == null
-                          ? 'Start Time'
-                          : _startTime!.format(context),
-                    ),
-                    onPressed: _pickStartTime,
-                  ),
+              SizedBox(height: 15),
+              TextField(
+                controller: _descriptionController,
+                decoration: InputDecoration(labelText: 'Event description'),
+              ),
+              SizedBox(height: 20),
+              TextButton.icon(
+                icon: Icon(Icons.date_range),
+                label: Text(
+                  _startDate == null || _endDate == null
+                      ? 'Select Date Range'
+                      : '${_startDate!.toLocal().toString().split(' ')[0]} → ${_endDate!.toLocal().toString().split(' ')[0]}',
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: TextButton.icon(
-                    icon: const Icon(Icons.access_time),
-                    label: Text(
-                      _endTime == null ? 'End Time' : _endTime!.format(context),
+                onPressed: _pickDateRange,
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton.icon(
+                      icon: const Icon(Icons.access_time),
+                      label: Text(
+                        _startTime == null
+                            ? 'Start Time'
+                            : _startTime!.format(context),
+                      ),
+                      onPressed: _pickStartTime,
                     ),
-                    onPressed: _pickEndTime,
                   ),
-                ),
-              ],
-            ),
-          ],
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TextButton.icon(
+                      icon: const Icon(Icons.access_time),
+                      label: Text(
+                        _endTime == null
+                            ? 'End Time'
+                            : _endTime!.format(context),
+                      ),
+                      onPressed: _pickEndTime,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
       actions: [
         TextButton(onPressed: Navigator.of(context).pop, child: Text("Cancel")),
-        ElevatedButton(onPressed: _submit, child: Text('Add')),
+        ElevatedButton(
+          onPressed: _submit,
+          child: Text(widget.editFlag ? 'Update' : 'Add'),
+        ),
       ],
     );
   }

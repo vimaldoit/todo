@@ -10,6 +10,10 @@ class EventRepository {
     return _db.getAllEvents();
   }
 
+  Future<EventData> getEventById(int id) {
+    return _db.getEventById(id);
+  }
+
   Future<List<EventData>> getUserFavorites(String userId) {
     return _db.getUserFavorites(userId);
   }
@@ -34,5 +38,13 @@ class EventRepository {
       isFavorite: isFavorite,
       isBooked: isBooked,
     );
+  }
+
+  Future<void> deleteEvent(int eventId) {
+    return _db.deleteEvent(eventId);
+  }
+
+  Future<void> editEvent(EventData event) {
+    return _db.editEvent(event);
   }
 }

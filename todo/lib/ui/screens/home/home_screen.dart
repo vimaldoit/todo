@@ -3,8 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kalender/kalender.dart';
 import 'package:todo/data/model/event_model.dart';
 import 'package:todo/data/model/eventdata_model.dart';
+import 'package:todo/data/model/user_model.dart';
 import 'package:todo/ui/screens/home/home_bloc.dart';
 import 'package:todo/ui/screens/home/widgets/add_event_popup.dart';
+import 'package:intl/intl.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -25,25 +27,26 @@ class _HomeScreenState extends State<HomeScreen> {
   final calendarController = CalendarController<EventData>();
   final eventsController = DefaultEventsController<EventData>();
   late final viewConfigurations = <ViewConfiguration>[
-    MultiDayViewConfiguration.week(
-      displayRange: displayRange,
-      firstDayOfWeek: 1,
-    ),
-    MultiDayViewConfiguration.singleDay(displayRange: displayRange),
-    MultiDayViewConfiguration.workWeek(displayRange: displayRange),
-    MultiDayViewConfiguration.custom(
-      numberOfDays: 3,
-      displayRange: displayRange,
-    ),
+    // MultiDayViewConfiguration.week(
+    //   displayRange: displayRange,
+    //   firstDayOfWeek: 1,
+    // ),
+    // MultiDayViewConfiguration.singleDay(displayRange: displayRange),
+    // MultiDayViewConfiguration.workWeek(displayRange: displayRange),
+    // MultiDayViewConfiguration.custom(
+    //   numberOfDays: 3,
+    //   displayRange: displayRange,
+    // ),
     MonthViewConfiguration.singleMonth(),
-    MultiDayViewConfiguration.freeScroll(
-      displayRange: displayRange,
-      numberOfDays: 4,
-      name: "Free Scroll (WIP)",
-    ),
+    // MultiDayViewConfiguration.freeScroll(
+    //   displayRange: displayRange,
+    //   numberOfDays: 4,
+    //   name: "Free Scroll (WIP)",
+    // ),
   ];
 
   final now = DateTime.now();
+  AppUser? _currentUser;
 
   Widget _calendarToolbar() {
     return Padding(
@@ -86,20 +89,35 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () => calendarController.animateToDate(DateTime.now()),
             icon: const Icon(Icons.today),
           ),
-          SizedBox(
-            width: 120,
-            child: DropdownMenu(
-              dropdownMenuEntries:
-                  viewConfigurations
-                      .map((e) => DropdownMenuEntry(value: e, label: e.name))
-                      .toList(),
-              initialSelection: viewConfiguration,
-              onSelected: (value) {
-                if (value == null) return;
-                setState(() => viewConfiguration = value);
-              },
-            ),
+          SizedBox(width: 10),
+          DropdownButton<AppUser>(
+            value: _currentUser,
+            underline: const SizedBox(),
+            items:
+                users
+                    .map((u) => DropdownMenuItem(value: u, child: Text(u.name)))
+                    .toList(),
+            onChanged: (u) {
+              if (u != null) {
+                setState(() => _currentUser = u);
+                // context.read<HomeBloc>().add(SwitchUser(u));
+              }
+            },
           ),
+          // SizedBox(
+          //   width: 120,
+          //   child: DropdownMenu(
+          //     dropdownMenuEntries:
+          //         viewConfigurations
+          //             .map((e) => DropdownMenuEntry(value: e, label: e.name))
+          //             .toList(),
+          //     initialSelection: viewConfiguration,
+          //     onSelected: (value) {
+          //       if (value == null) return;
+          //       setState(() => viewConfiguration = value);
+          //     },
+          //   ),
+          // ),
         ],
       ),
     );
@@ -109,18 +127,25 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     // TODO: implement initState
     super.initState();
+    _currentUser = users[0];
     context.read<HomeBloc>().add(LoadEvents());
   }
 
-  void _openAddEventDialog() async {
+  void _openAddEventDialog({bool editFlag = false, EventData? data}) async {
     final newEvent = await showDialog<CalendarEvent<EventData>>(
       context: context,
-      builder: (context) => AddEventPopup(),
+      builder: (context) => AddEventPopup(editFlag: editFlag, data: data),
     );
 
     if (newEvent != null) {
       if (!mounted) return;
-      context.read<HomeBloc>().add(AddCalendarEvent(newEvent));
+      final updateEvent = newEvent.data!.copyWith(id: data?.id);
+      if (editFlag) {
+        context.read<HomeBloc>().add(EditCalendarEvent(updateEvent));
+      } else {
+        context.read<HomeBloc>().add(AddCalendarEvent(newEvent));
+      }
+
       //   setState(() {
       //     eventsController.addEvent(newEvent);
       //   });
@@ -164,12 +189,18 @@ class _HomeScreenState extends State<HomeScreen> {
     showModalBottomSheet(
       context: cntxt,
       isScrollControlled: true,
+      backgroundColor: Theme.of(cntxt).colorScheme.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder:
           (cntxt) => Padding(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.only(
+              left: 24,
+              right: 24,
+              top: 16,
+              bottom: MediaQuery.of(cntxt).viewInsets.bottom + 24,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -178,7 +209,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Container(
                     width: 40,
                     height: 5,
-                    margin: const EdgeInsets.only(bottom: 12),
+                    margin: const EdgeInsets.only(bottom: 16),
                     decoration: BoxDecoration(
                       color: Colors.grey[400],
                       borderRadius: BorderRadius.circular(10),
@@ -187,64 +218,174 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 Text(
                   event.data?.title ?? "No Title",
-                  style: Theme.of(context).textTheme.headlineSmall,
+                  style: Theme.of(cntxt).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
+                Divider(),
+                const SizedBox(height: 12),
                 Row(
                   children: [
-                    const Icon(Icons.access_time, size: 20),
-                    const SizedBox(width: 8),
-                    Text(
-                      "${event.dateTimeRange.start} - ${event.dateTimeRange.end}",
+                    Icon(
+                      Icons.access_time,
+                      size: 22,
+                      color: Theme.of(cntxt).colorScheme.primary,
                     ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(Icons.circle, size: 16),
-                    const SizedBox(width: 8),
-                    Text("Color:"),
-                    const SizedBox(width: 4),
-                    Container(
-                      width: 20,
-                      height: 20,
-                      decoration: BoxDecoration(
-                        color: event.data?.color,
-                        shape: BoxShape.circle,
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            "${DateFormat('yyyy-MM-dd').format(event.dateTimeRange.start)}\n${DateFormat('hh:mm a').format(event.dateTimeRange.start)}",
+                            style: Theme.of(cntxt).textTheme.bodyMedium,
+                          ),
+                          Spacer(),
+                          Text("- to -"),
+                          Spacer(),
+                          Text(
+                            "${DateFormat('yyyy-MM-dd').format(event.dateTimeRange.end)}\n${DateFormat('hh:mm a').format(event.dateTimeRange.end)}",
+                            style: Theme.of(cntxt).textTheme.bodyMedium,
+                          ),
+                        ],
                       ),
                     ),
+                    // Text(
+                    //   "${DateFormat('yyyy-MM-dd hh:mm a').format(event.dateTimeRange.start)}\nto\n${DateFormat('yyyy-MM-dd hh:mm a').format(event.dateTimeRange.end)}",
+                    //   style: Theme.of(cntxt).textTheme.bodyMedium,
+                    // ),
                   ],
                 ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        // TODO: Implement edit
-                        Navigator.pop(context);
-                      },
-                      icon: const Icon(Icons.edit),
-                      label: const Text("Edit"),
-                    ),
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        // TODO: Implement delete
-                        // context.read<HomeBloc>().add(
-                        //   RemoveCalendarEvent(event),
-                        // );
-                        Navigator.pop(context);
-                      },
-                      icon: const Icon(Icons.delete),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
+                const SizedBox(height: 16),
+                if (event.data?.description != null &&
+                    event.data!.description!.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16, left: 4, right: 4),
+                    child: Text(
+                      "Description",
+                      style: Theme.of(cntxt).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
                       ),
-                      label: const Text("Delete"),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 20),
+                  ),
+                if (event.data?.description != null &&
+                    event.data!.description!.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 8,
+                      horizontal: 4,
+                    ),
+                    child: Text(event.data!.description.toString()),
+                  ),
+                const SizedBox(height: 24),
+                _currentUser!.id == ''
+                    ? Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            // TODO: Implement edit
+                            Navigator.of(context).pop();
+                            _openAddEventDialog(
+                              editFlag: true,
+                              data: event.data,
+                            );
+                          },
+                          icon: const Icon(Icons.edit),
+                          label: const Text("Edit"),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                Theme.of(cntxt).colorScheme.primaryContainer,
+                            foregroundColor:
+                                Theme.of(cntxt).colorScheme.onPrimaryContainer,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            // TODO: Implement delete
+                            context.read<HomeBloc>().add(
+                              RemoveCalendarEvent(event),
+                            );
+                            Navigator.pop(cntxt);
+                          },
+                          icon: const Icon(Icons.delete),
+                          label: const Text("Delete"),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red.shade400,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                    : Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            // TODO: Implement edit
+                            Navigator.of(context).pop();
+                            context.read<HomeBloc>().add(
+                              ToggleFavoriteEvent(
+                                userId: _currentUser!.id,
+                                eventId: event.data!.id!,
+                                isFavorite: true,
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.favorite),
+                          label: const Text("favorites"),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.red,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            // TODO: Implement delete
+                            context.read<HomeBloc>().add(
+                              RemoveCalendarEvent(event),
+                            );
+                            Navigator.pop(cntxt);
+                          },
+                          icon: const Icon(Icons.book_online),
+                          label: const Text("Book Event"),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green.shade400,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
               ],
             ),
           ),
@@ -272,7 +413,7 @@ class _HomeScreenState extends State<HomeScreen> {
               return ListTile(
                 title: Text(event.data?.title ?? "No title"),
                 subtitle: Text(
-                  "${event.dateTimeRange.start} - ${event.dateTimeRange.end}",
+                  "${DateFormat('yyyy-MM-dd hh:mm a').format(event.dateTimeRange.start)} - ${DateFormat('yyyy-MM-dd hh:mm a').format(event.dateTimeRange.end)}",
                 ),
                 onTap: () => _openEventDetails(event, context),
               );
@@ -309,7 +450,7 @@ class _HomeScreenState extends State<HomeScreen> {
       },
 
       child: Scaffold(
-        appBar: AppBar(title: const Text('Calendar')),
+        appBar: AppBar(title: const Text('Events')),
         floatingActionButton: FloatingActionButton(
           onPressed: () => _openAddEventDialog(),
           child: const Icon(Icons.add),

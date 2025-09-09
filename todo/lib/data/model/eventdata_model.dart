@@ -17,6 +17,24 @@ class EventData {
     required this.color,
   });
 
+  EventData copyWith({
+    int? id,
+    String? title,
+    String? description,
+    DateTime? start,
+    DateTime? end,
+    Color? color,
+  }) {
+    return EventData(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      start: start ?? this.start,
+      end: end ?? this.end,
+      color: color ?? this.color,
+    );
+  }
+
   Map<String, dynamic> toMap() => {
     'id': id,
     'title': title,

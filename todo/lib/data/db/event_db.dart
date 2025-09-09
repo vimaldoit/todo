@@ -40,7 +40,7 @@ class EventDatabase {
         event_id INTEGER,
         is_favorite INTEGER DEFAULT 0,
         is_booked INTEGER DEFAULT 0,
-        FOREIGN KEY (event_id) REFERENCES events(id)
+        FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE 
       );
     ''');
   }
@@ -91,14 +91,6 @@ class EventDatabase {
   Future<void> deleteEvent(int eventId) async {
     final db = await database;
 
-    // Delete related status records first
-    await db.delete(
-      'user_event_status',
-      where: 'event_id = ?',
-      whereArgs: [eventId],
-    );
-
-    // Then delete the event
     await db.delete('events', where: 'id = ?', whereArgs: [eventId]);
   }
 
@@ -132,5 +124,26 @@ class EventDatabase {
           isFavorite != null ? (isFavorite ? 1 : 0) : currentFavorite,
       'is_booked': isBooked != null ? (isBooked ? 1 : 0) : currentBooked,
     }, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<void> editEvent(EventData event) async {
+    final db = await database;
+    await db.update(
+      'events',
+      event.toMap(),
+      where: 'id = ?',
+      whereArgs: [event.id],
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<EventData> getEventById(int eventId) async {
+    final db = await database;
+    final maps = await db.query(
+      'events',
+      where: 'id = ?',
+      whereArgs: [eventId],
+    );
+    return EventData.fromMap(maps.first);
   }
 }

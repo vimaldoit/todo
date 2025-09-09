@@ -20,10 +20,17 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     on<LoadEvents>(_onLoadEvents);
     on<AddCalendarEvent>(_onAddEvent);
     on<RemoveCalendarEvent>(_onRemoveEvent);
+    on<EditCalendarEvent>(_onEditEvent);
+    on<ToggleFavoriteEvent>(_onToggleFavorite);
   }
   final List<CalendarEvent<EventData>> _events = [];
   void _onLoadEvents(LoadEvents event, Emitter<HomeState> emit) async {
     final saveData = await repository.getAllEvents();
+    final userFavevent;
+    if (event.userId != '') {
+      userFavevent = await repository.getUserFavorites(event.userId);
+    }
+
     // final favs = await repository.getUserFavorites(event.userId);
     // final bookings = await repository.getUserBookings(event.userId);
 
@@ -50,13 +57,21 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     Emitter<HomeState> emit,
   ) async {
     _events.remove(event.calendarEvent);
-    // _saveEvents();
-    // _onLoadEvents(LoadEvents(), emit);
-    // emit(CalendarLoaded(List.from(_events)));
+    await repository.deleteEvent(event.calendarEvent.data!.id!);
+    add(LoadEvents());
+  }
+
+  void _onEditEvent(EditCalendarEvent event, Emitter<HomeState> emit) async {
+    try {
+      await repository.editEvent(event.calendarEvent);
+      add(LoadEvents());
+    } catch (e) {
+      print("Error editing event: $e");
+    }
   }
 
   Future<void> _onToggleFavorite(
-    ToggleFavorite event,
+    ToggleFavoriteEvent event,
     Emitter<HomeState> emit,
   ) async {
     await repository.updateEventStatus(
@@ -64,20 +79,20 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       eventId: event.eventId,
       isFavorite: event.isFavorite,
     );
-    add(LoadEvents(event.userId));
+    add(LoadEvents(userId: event.userId));
   }
 
-  Future<void> _onToggleBooking(
-    ToggleBooking event,
-    Emitter<HomeState> emit,
-  ) async {
-    await repository.updateEventStatus(
-      userId: event.userId,
-      eventId: event.eventId,
-      isBooked: event.isBooked,
-    );
-    add(LoadEvents(event.userId));
-  }
+  // Future<void> _onToggleBooking(
+  //   ToggleBooking event,
+  //   Emitter<HomeState> emit,
+  // ) async {
+  //   await repository.updateEventStatus(
+  //     userId: event.userId,
+  //     eventId: event.eventId,
+  //     isBooked: event.isBooked,
+  //   );
+  //   add(LoadEvents(event.userId));
+  // }
 
   // Future<void> _saveEvents() async {
   //   final prefs = await SharedPreferences.getInstance();
