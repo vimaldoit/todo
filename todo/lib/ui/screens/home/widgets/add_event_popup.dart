@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:kalender/kalender.dart';
 import 'package:todo/data/model/event_model.dart';
+import 'package:todo/data/model/eventdata_model.dart';
 
 class AddEventPopup extends StatefulWidget {
   const AddEventPopup({super.key});
@@ -92,9 +93,14 @@ class _AddEventPopupState extends State<AddEventPopup> {
       return;
     }
 
-    final event = CalendarEvent<Event>(
+    final event = CalendarEvent<EventData>(
       dateTimeRange: DateTimeRange(start: startDateTime, end: endDateTime),
-      data: Event(_titleController.text, _selectedColor),
+      data: EventData(
+        title: _titleController.text,
+        color: _selectedColor,
+        start: startDateTime,
+        end: endDateTime,
+      ),
     );
 
     Navigator.of(context).pop(event);

@@ -6,7 +6,7 @@ sealed class HomeEvent {}
 class LoadEvents extends HomeEvent {}
 
 class AddCalendarEvent extends HomeEvent {
-  final CalendarEvent<Event> calendarEvent;
+  final CalendarEvent<EventData> calendarEvent;
   AddCalendarEvent(this.calendarEvent);
 }
 

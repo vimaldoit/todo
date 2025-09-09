@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:kalender/kalender.dart';
 import 'package:todo/data/model/event_model.dart';
+import 'package:todo/data/model/eventdata_model.dart';
 import 'package:todo/ui/screens/home/home_bloc.dart';
 import 'package:todo/ui/screens/home/widgets/add_event_popup.dart';
 
@@ -21,8 +22,8 @@ class _HomeScreenState extends State<HomeScreen> {
   /// Set the initial view configuration.
   late ViewConfiguration viewConfiguration = viewConfigurations[0];
 
-  final calendarController = CalendarController<Event>();
-  final eventsController = DefaultEventsController<Event>();
+  final calendarController = CalendarController<EventData>();
+  final eventsController = DefaultEventsController<EventData>();
   late final viewConfigurations = <ViewConfiguration>[
     MultiDayViewConfiguration.week(
       displayRange: displayRange,
@@ -112,12 +113,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _openAddEventDialog() async {
-    final newEvent = await showDialog<CalendarEvent<Event>>(
+    final newEvent = await showDialog<CalendarEvent<EventData>>(
       context: context,
       builder: (context) => AddEventPopup(),
     );
 
     if (newEvent != null) {
+      if (!mounted) return;
       context.read<HomeBloc>().add(AddCalendarEvent(newEvent));
       //   setState(() {
       //     eventsController.addEvent(newEvent);
@@ -158,7 +160,7 @@ class _HomeScreenState extends State<HomeScreen> {
   //         ),
   //   );
   // }
-  void _openEventDetails(CalendarEvent<Event> event, BuildContext cntxt) {
+  void _openEventDetails(CalendarEvent<EventData> event, BuildContext cntxt) {
     showModalBottomSheet(
       context: cntxt,
       isScrollControlled: true,
@@ -229,9 +231,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     ElevatedButton.icon(
                       onPressed: () {
                         // TODO: Implement delete
-                        context.read<HomeBloc>().add(
-                          RemoveCalendarEvent(event),
-                        );
+                        // context.read<HomeBloc>().add(
+                        //   RemoveCalendarEvent(event),
+                        // );
                         Navigator.pop(context);
                       },
                       icon: const Icon(Icons.delete),
@@ -306,18 +308,17 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       },
 
-      // builder: (context, state) {
       child: Scaffold(
         appBar: AppBar(title: const Text('Calendar')),
         floatingActionButton: FloatingActionButton(
           onPressed: () => _openAddEventDialog(),
           child: const Icon(Icons.add),
         ),
-        body: CalendarView<Event>(
+        body: CalendarView<EventData>(
           eventsController: eventsController,
           calendarController: calendarController,
           viewConfiguration: viewConfiguration,
-          callbacks: CalendarCallbacks<Event>(
+          callbacks: CalendarCallbacks<EventData>(
             // onEventTapped:
             //     (event, _) => calendarController.selectEvent(event),
             onEventCreate: (event) => event,
@@ -335,13 +336,13 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               children: [
                 _calendarToolbar(),
-                CalendarHeader<Event>(
+                CalendarHeader<EventData>(
                   multiDayTileComponents: _tileComponents(context, body: false),
                 ),
               ],
             ),
           ),
-          body: CalendarBody<Event>(
+          body: CalendarBody<EventData>(
             multiDayTileComponents: _tileComponents(context),
             monthTileComponents: _tileComponents(context, body: false),
             //   scheduleTileComponents: _scheduleTileComponents(context),
@@ -353,60 +354,59 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-      // },
     );
   }
-
-  //  Scaffold(
-  //   appBar: AppBar(title: const Text("Events")),
-  //   body: BlocConsumer<HomeBloc, HomeState>(
-  //     listener: (context, state) {
-  //       if (state is CalendarLoaded) {
-  //         eventsController.addEvent(state.events.first);
-  //       }
-  //     },
-  //     builder: (context, state) {
-  //       if (state is CalendarLoaded) {
-  //         return
-
-  //         // CalendarView(
-  //         //   eventsController: eventsController,
-  //         //   calendarController: calendarController,
-  //         //   viewConfiguration: MultiDayViewConfiguration.week(
-  //         //     displayRange: DateTimeRange(
-  //         //       start: DateTime.now().subtract(const Duration(days: 365)),
-  //         //       end: DateTime.now().add(const Duration(days: 365)),
-  //         //     ),
-  //         //     firstDayOfWeek: 1,
-  //         //   ),
-  //         //   callbacks: CalendarCallbacks<Event>(
-  //         //     onEventCreate: (event) => event,
-  //         //     onEventCreated:
-  //         //         (event) =>
-  //         //             context.read<HomeBloc>().add(AddCalendarEvent(event)),
-  //         //     onEventTapped:
-  //         //         (event, _) => calendarController.selectEvent(event),
-  //         //   ),
-  //         // );
-  //       }
-  //       return const Center(child: CircularProgressIndicator());
-  //     },
-  //   ),
-  //   floatingActionButton: FloatingActionButton(
-  //     onPressed: _openAddEventDialog,
-  //     child: Icon(Icons.add),
-  //   ),
-  // );
 }
 
-TileComponents<Event> _tileComponents(
+//  Scaffold(
+//   appBar: AppBar(title: const Text("Events")),
+//   body: BlocConsumer<HomeBloc, HomeState>(
+//     listener: (context, state) {
+//       if (state is CalendarLoaded) {
+//         eventsController.addEvent(state.events.first);
+//       }
+//     },
+//     builder: (context, state) {
+//       if (state is CalendarLoaded) {
+//         return
+
+//         // CalendarView(
+//         //   eventsController: eventsController,
+//         //   calendarController: calendarController,
+//         //   viewConfiguration: MultiDayViewConfiguration.week(
+//         //     displayRange: DateTimeRange(
+//         //       start: DateTime.now().subtract(const Duration(days: 365)),
+//         //       end: DateTime.now().add(const Duration(days: 365)),
+//         //     ),
+//         //     firstDayOfWeek: 1,
+//         //   ),
+//         //   callbacks: CalendarCallbacks<Event>(
+//         //     onEventCreate: (event) => event,
+//         //     onEventCreated:
+//         //         (event) =>
+//         //             context.read<HomeBloc>().add(AddCalendarEvent(event)),
+//         //     onEventTapped:
+//         //         (event, _) => calendarController.selectEvent(event),
+//         //   ),
+//         // );
+//       }
+//       return const Center(child: CircularProgressIndicator());
+//     },
+//   ),
+//   floatingActionButton: FloatingActionButton(
+//     onPressed: _openAddEventDialog,
+//     child: Icon(Icons.add),
+//   ),
+// );
+
+TileComponents<EventData> _tileComponents(
   BuildContext context, {
   bool body = true,
 }) {
   final color = Theme.of(context).colorScheme.primaryContainer;
   final radius = BorderRadius.circular(5);
 
-  return TileComponents<Event>(
+  return TileComponents<EventData>(
     tileBuilder: (event, _) {
       return Container(
         decoration: BoxDecoration(

@@ -88,6 +88,20 @@ class EventDatabase {
     return result.map((e) => EventData.fromMap(e)).toList();
   }
 
+  Future<void> deleteEvent(int eventId) async {
+    final db = await database;
+
+    // Delete related status records first
+    await db.delete(
+      'user_event_status',
+      where: 'event_id = ?',
+      whereArgs: [eventId],
+    );
+
+    // Then delete the event
+    await db.delete('events', where: 'id = ?', whereArgs: [eventId]);
+  }
+
   Future<void> updateEventStatus({
     required String userId,
     required int eventId,
