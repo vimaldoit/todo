@@ -33,3 +33,19 @@ class ToggleFavoriteEvent extends HomeEvent {
     required this.isFavorite,
   });
 }
+
+class ToggleBookingEvent extends HomeEvent {
+  final int eventId;
+  final String userId;
+  final bool isBooked;
+  ToggleBookingEvent({
+    required this.eventId,
+    required this.userId,
+    required this.isBooked,
+  });
+}
+
+class SwitchUserEvent extends HomeEvent {
+  final AppUser user;
+  SwitchUserEvent(this.user);
+}

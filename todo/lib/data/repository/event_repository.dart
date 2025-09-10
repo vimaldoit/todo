@@ -47,4 +47,8 @@ class EventRepository {
   Future<void> editEvent(EventData event) {
     return _db.editEvent(event);
   }
+
+  Future<dynamic> getuserwitheventdata(String userId, String eventId) {
+    return _db.getuserwitheventdata(userId, eventId);
+  }
 }

@@ -100,7 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
             onChanged: (u) {
               if (u != null) {
                 setState(() => _currentUser = u);
-                // context.read<HomeBloc>().add(SwitchUser(u));
+                context.read<HomeBloc>().add(SwitchUserEvent(u));
               }
             },
           ),
@@ -344,15 +344,21 @@ class _HomeScreenState extends State<HomeScreen> {
                               ToggleFavoriteEvent(
                                 userId: _currentUser!.id,
                                 eventId: event.data!.id!,
-                                isFavorite: true,
+                                isFavorite:
+                                    event.data!.favoriteFlag == 1
+                                        ? false
+                                        : true,
                               ),
                             );
                           },
-                          icon: const Icon(Icons.favorite),
-                          label: const Text("favorites"),
+                          icon: Icon(Icons.favorite),
+                          label: const Text("favorite"),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
-                            foregroundColor: Colors.red,
+                            foregroundColor:
+                                event.data!.favoriteFlag == 1
+                                    ? Colors.red
+                                    : Colors.grey,
                             padding: const EdgeInsets.symmetric(
                               horizontal: 24,
                               vertical: 12,
@@ -363,17 +369,29 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                         ElevatedButton.icon(
-                          onPressed: () {
-                            // TODO: Implement delete
-                            context.read<HomeBloc>().add(
-                              RemoveCalendarEvent(event),
-                            );
-                            Navigator.pop(cntxt);
-                          },
+                          onPressed:
+                              event.data!.bookFlag == 1
+                                  ? null
+                                  : () {
+                                    // TODO: Implement delete
+                                    Navigator.of(context).pop();
+                                    context.read<HomeBloc>().add(
+                                      ToggleBookingEvent(
+                                        userId: _currentUser!.id,
+                                        eventId: event.data!.id!,
+                                        isBooked: true,
+                                      ),
+                                    );
+                                  },
                           icon: const Icon(Icons.book_online),
-                          label: const Text("Book Event"),
+                          label: Text(
+                            event.data!.bookFlag == 1 ? 'Booked' : "Book Event",
+                          ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green.shade400,
+                            backgroundColor:
+                                event.data!.bookFlag == 1
+                                    ? Colors.grey
+                                    : Colors.green.shade400,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(
                               horizontal: 24,
@@ -388,36 +406,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
               ],
             ),
-          ),
-    );
-  }
-
-  void _openEventsByDate(DateTime date) {
-    final events =
-        eventsController.events
-            .where(
-              (e) =>
-                  e.dateTimeRange.start.day == date.day &&
-                  e.dateTimeRange.start.month == date.month &&
-                  e.dateTimeRange.start.year == date.year,
-            )
-            .toList();
-
-    showModalBottomSheet(
-      context: context,
-      builder:
-          (context) => ListView.builder(
-            itemCount: events.length,
-            itemBuilder: (context, index) {
-              final event = events[index];
-              return ListTile(
-                title: Text(event.data?.title ?? "No title"),
-                subtitle: Text(
-                  "${DateFormat('yyyy-MM-dd hh:mm a').format(event.dateTimeRange.start)} - ${DateFormat('yyyy-MM-dd hh:mm a').format(event.dateTimeRange.end)}",
-                ),
-                onTap: () => _openEventDetails(event, context),
-              );
-            },
           ),
     );
   }
@@ -468,8 +456,6 @@ class _HomeScreenState extends State<HomeScreen> {
               context.read<HomeBloc>().add(AddCalendarEvent(event));
             },
             onEventTapped: (event, _) => _openEventDetails(event, context),
-            onMultiDayTapped:
-                (dateRange) => (date, _) => _openEventsByDate(date),
           ),
           header: Material(
             color: Theme.of(context).colorScheme.surface,
