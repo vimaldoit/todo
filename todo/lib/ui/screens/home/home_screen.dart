@@ -27,6 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final calendarController = CalendarController<EventData>();
   final eventsController = DefaultEventsController<EventData>();
   late final viewConfigurations = <ViewConfiguration>[
+    MonthViewConfiguration.singleMonth(),
     // MultiDayViewConfiguration.week(
     //   displayRange: displayRange,
     //   firstDayOfWeek: 1,
@@ -37,7 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
     //   numberOfDays: 3,
     //   displayRange: displayRange,
     // ),
-    MonthViewConfiguration.singleMonth(),
+
     // MultiDayViewConfiguration.freeScroll(
     //   displayRange: displayRange,
     //   numberOfDays: 4,
@@ -63,8 +64,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     final int year;
 
                     if (viewConfiguration is MonthViewConfiguration) {
-                      // Since the visible DateTimeRange returned by the month view does not always start at the beginning of the month,
-                      // we need to check the second week of the visibleDateTimeRange to determine the month and year.
                       final secondWeek = value.start.addDays(7);
                       year = secondWeek.year;
                       month = secondWeek.monthNameLocalized();
@@ -104,20 +103,6 @@ class _HomeScreenState extends State<HomeScreen> {
               }
             },
           ),
-          // SizedBox(
-          //   width: 120,
-          //   child: DropdownMenu(
-          //     dropdownMenuEntries:
-          //         viewConfigurations
-          //             .map((e) => DropdownMenuEntry(value: e, label: e.name))
-          //             .toList(),
-          //     initialSelection: viewConfiguration,
-          //     onSelected: (value) {
-          //       if (value == null) return;
-          //       setState(() => viewConfiguration = value);
-          //     },
-          //   ),
-          // ),
         ],
       ),
     );
@@ -145,46 +130,9 @@ class _HomeScreenState extends State<HomeScreen> {
       } else {
         context.read<HomeBloc>().add(AddCalendarEvent(newEvent));
       }
-
-      //   setState(() {
-      //     eventsController.addEvent(newEvent);
-      //   });
     }
   }
 
-  // void _openEventDetails(CalendarEvent<Event> event) {
-  //   showDialog(
-  //     context: context,
-  //     builder:
-  //         (context) => AlertDialog(
-  //           title: Text(event.data?.title ?? "No Title"),
-  //           content: Column(
-  //             mainAxisSize: MainAxisSize.min,
-  //             crossAxisAlignment: CrossAxisAlignment.start,
-  //             children: [
-  //               Text("Start: ${event.dateTimeRange.start}"),
-  //               Text("End: ${event.dateTimeRange.end}"),
-  //               const SizedBox(height: 8),
-  //               Text("Color:"),
-  //               Container(
-  //                 width: 30,
-  //                 height: 30,
-  //                 decoration: BoxDecoration(
-  //                   color: event.data?.color,
-  //                   shape: BoxShape.circle,
-  //                 ),
-  //               ),
-  //             ],
-  //           ),
-  //           actions: [
-  //             TextButton(
-  //               onPressed: () => Navigator.pop(context),
-  //               child: const Text("Close"),
-  //             ),
-  //           ],
-  //         ),
-  //   );
-  // }
   void _openEventDetails(CalendarEvent<EventData> event, BuildContext cntxt) {
     showModalBottomSheet(
       context: cntxt,
@@ -252,10 +200,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                     ),
-                    // Text(
-                    //   "${DateFormat('yyyy-MM-dd hh:mm a').format(event.dateTimeRange.start)}\nto\n${DateFormat('yyyy-MM-dd hh:mm a').format(event.dateTimeRange.end)}",
-                    //   style: Theme.of(cntxt).textTheme.bodyMedium,
-                    // ),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -418,22 +362,6 @@ class _HomeScreenState extends State<HomeScreen> {
         if (state is CalendarLoaded) {
           eventsController.clearEvents();
           eventsController.addEvents(state.events);
-          //   eventsController.addEvents([
-          //     CalendarEvent(
-          //       dateTimeRange: DateTimeRange(
-          //         start: now,
-          //         end: now.add(const Duration(hours: 6)),
-          //       ),
-          //       data: const Event('My Event', Colors.green),
-          //     ),
-          //     CalendarEvent(
-          //       dateTimeRange: DateTimeRange(
-          //         start: now,
-          //         end: now.add(const Duration(days: 1, hours: 1)),
-          //       ),
-          //       data: const Event('My Event', Colors.blue),
-          //     ),
-          //   ]);
         }
       },
 
@@ -463,6 +391,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               children: [
                 _calendarToolbar(),
+                Indicators(),
                 CalendarHeader<EventData>(
                   multiDayTileComponents: _tileComponents(context, body: false),
                 ),
@@ -485,46 +414,41 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-//  Scaffold(
-//   appBar: AppBar(title: const Text("Events")),
-//   body: BlocConsumer<HomeBloc, HomeState>(
-//     listener: (context, state) {
-//       if (state is CalendarLoaded) {
-//         eventsController.addEvent(state.events.first);
-//       }
-//     },
-//     builder: (context, state) {
-//       if (state is CalendarLoaded) {
-//         return
+class Indicators extends StatelessWidget {
+  const Indicators({super.key});
 
-//         // CalendarView(
-//         //   eventsController: eventsController,
-//         //   calendarController: calendarController,
-//         //   viewConfiguration: MultiDayViewConfiguration.week(
-//         //     displayRange: DateTimeRange(
-//         //       start: DateTime.now().subtract(const Duration(days: 365)),
-//         //       end: DateTime.now().add(const Duration(days: 365)),
-//         //     ),
-//         //     firstDayOfWeek: 1,
-//         //   ),
-//         //   callbacks: CalendarCallbacks<Event>(
-//         //     onEventCreate: (event) => event,
-//         //     onEventCreated:
-//         //         (event) =>
-//         //             context.read<HomeBloc>().add(AddCalendarEvent(event)),
-//         //     onEventTapped:
-//         //         (event, _) => calendarController.selectEvent(event),
-//         //   ),
-//         // );
-//       }
-//       return const Center(child: CircularProgressIndicator());
-//     },
-//   ),
-//   floatingActionButton: FloatingActionButton(
-//     onPressed: _openAddEventDialog,
-//     child: Icon(Icons.add),
-//   ),
-// );
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        SizedBox(width: 10),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              height: 15,
+              width: 15,
+              decoration: BoxDecoration(color: Colors.redAccent),
+            ),
+            Text(" Favorite"),
+          ],
+        ),
+        SizedBox(width: 10),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              height: 15,
+              width: 15,
+              decoration: BoxDecoration(color: Colors.green),
+            ),
+            Text(" Booked"),
+          ],
+        ),
+      ],
+    );
+  }
+}
 
 TileComponents<EventData> _tileComponents(
   BuildContext context, {

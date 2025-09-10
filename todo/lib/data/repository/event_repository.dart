@@ -10,6 +10,14 @@ class EventRepository {
     return _db.getAllEvents();
   }
 
+  Future<List<EventData>> getAllFavEvents() {
+    return _db.getAllEvents();
+  }
+
+  Future<List<EventData>> getAllBookedEvents() {
+    return _db.getAllEvents();
+  }
+
   Future<EventData> getEventById(int id) {
     return _db.getEventById(id);
   }

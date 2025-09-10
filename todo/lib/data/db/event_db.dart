@@ -38,15 +38,6 @@ class EventDatabase {
       );
     ''');
 
-    // await db.execute('''
-    //   CREATE TABLE user_event_status (
-    //     user_id TEXT,
-    //     event_id INTEGER,
-    //     is_favorite INTEGER DEFAULT 0,
-    //     is_booked INTEGER DEFAULT 0,
-    //     FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
-    //   );
-    // ''');
     await db.execute('''
     CREATE TABLE user_favorite_events (
       user_id TEXT,
@@ -79,6 +70,26 @@ class EventDatabase {
     return maps.map((e) => EventData.fromMap(e)).toList();
   }
 
+  Future<List<EventData>> getAllBookings() async {
+    final db = await database;
+    final result = await db.rawQuery('''
+      SELECT e.* FROM events e
+      JOIN user_booked_events s ON e.id = s.event_id
+    ''');
+
+    return result.map((e) => EventData.fromMap(e)).toList();
+  }
+
+  Future<List<EventData>> getAllFavorites() async {
+    final db = await database;
+    final result = await db.rawQuery('''
+      SELECT e.* FROM events e
+      JOIN user_favorite_events s ON e.id = s.event_id
+    ''');
+
+    return result.map((e) => EventData.fromMap(e)).toList();
+  }
+
   Future<List<EventData>> getUserFavorites(String userId) async {
     final db = await database;
     final result = await db.rawQuery(
@@ -89,7 +100,7 @@ class EventDatabase {
     ''',
       [userId],
     );
-    print('updated: $result');
+
     return result.map((e) => EventData.fromMap(e)).toList();
   }
 
