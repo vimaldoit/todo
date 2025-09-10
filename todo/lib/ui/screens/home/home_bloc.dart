@@ -28,6 +28,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   void _onLoadEvents(LoadEvents event, Emitter<HomeState> emit) async {
     var finalEventdata;
     final saveData = await repository.getAllEvents();
+    final allFavEvents = await repository.getAllFavEvents();
+    final allBookedEvents = await repository.getAllBookedEvents();
 
     if (event.userId != '') {
       final userFavevent = await repository.getUserFavorites(event.userId);
