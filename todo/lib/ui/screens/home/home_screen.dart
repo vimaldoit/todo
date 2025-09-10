@@ -7,6 +7,7 @@ import 'package:todo/data/model/user_model.dart';
 import 'package:todo/ui/screens/home/home_bloc.dart';
 import 'package:todo/ui/screens/home/widgets/add_event_popup.dart';
 import 'package:intl/intl.dart';
+import 'package:todo/ui/screens/home/widgets/eventsearch.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -133,6 +134,52 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  void showBookingBottomSheet(BuildContext context, {required bool booked}) {
+    final icon = booked ? Icons.check_circle : Icons.cancel;
+    final color = booked ? Colors.green : Colors.red;
+    final title = booked ? "Booking Successful!" : "Booking Cancelled";
+    final message =
+        booked
+            ? "You have successfully booked this event."
+            : "Your booking has been cancelled.";
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return SizedBox(
+          width: double.infinity,
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, color: color, size: 60),
+                const SizedBox(height: 12),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(message),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text("Close"),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   void _openEventDetails(CalendarEvent<EventData> event, BuildContext cntxt) {
     showModalBottomSheet(
       context: cntxt,
@@ -172,6 +219,26 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
+
+                _currentUser!.id != ''
+                    ? SizedBox()
+                    : Row(
+                      children: [
+                        Icon(Icons.favorite, color: Colors.redAccent, size: 18),
+                        const SizedBox(width: 4),
+                        Text(
+                          "Favorites: ${event.data?.favoriteCount ?? 0}",
+                          style: Theme.of(cntxt).textTheme.bodyMedium,
+                        ),
+                        const SizedBox(width: 16),
+                        Icon(Icons.book_online, color: Colors.green, size: 18),
+                        const SizedBox(width: 4),
+                        Text(
+                          "Booked: ${event.data?.bookCount ?? 0}",
+                          style: Theme.of(cntxt).textTheme.bodyMedium,
+                        ),
+                      ],
+                    ),
                 Divider(),
                 const SizedBox(height: 12),
                 Row(
@@ -202,7 +269,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+
+                const SizedBox(height: 0),
                 if (event.data?.description != null &&
                     event.data!.description!.isNotEmpty)
                   Padding(
@@ -218,7 +286,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     event.data!.description!.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.symmetric(
-                      vertical: 8,
+                      vertical: 4,
                       horizontal: 4,
                     ),
                     child: Text(event.data!.description.toString()),
@@ -315,10 +383,28 @@ class _HomeScreenState extends State<HomeScreen> {
                         ElevatedButton.icon(
                           onPressed:
                               event.data!.bookFlag == 1
-                                  ? null
+                                  ? () {
+                                    Navigator.of(context).pop();
+                                    showBookingBottomSheet(
+                                      context,
+                                      booked: false,
+                                    );
+                                    context.read<HomeBloc>().add(
+                                      ToggleBookingEvent(
+                                        userId: _currentUser!.id,
+                                        eventId: event.data!.id!,
+                                        isBooked: false,
+                                      ),
+                                    );
+                                  }
                                   : () {
                                     // TODO: Implement delete
+
                                     Navigator.of(context).pop();
+                                    showBookingBottomSheet(
+                                      context,
+                                      booked: true,
+                                    );
                                     context.read<HomeBloc>().add(
                                       ToggleBookingEvent(
                                         userId: _currentUser!.id,
@@ -366,7 +452,21 @@ class _HomeScreenState extends State<HomeScreen> {
       },
 
       child: Scaffold(
-        appBar: AppBar(title: const Text('Events')),
+        resizeToAvoidBottomInset: true,
+        appBar: AppBar(
+          title: const Text('Events'),
+          // actions: [
+          //   IconButton(
+          //     icon: const Icon(Icons.search),
+          //     onPressed: () {
+          //       showSearch(
+          //         context: context,
+          //         delegate: EventSearchDelegate(context.read<HomeBloc>()),
+          //       );
+          //     },
+          //   ),
+          // ],
+        ),
         floatingActionButton: FloatingActionButton(
           onPressed: () => _openAddEventDialog(),
           child: const Icon(Icons.add),

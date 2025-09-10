@@ -132,71 +132,86 @@ class _AddEventPopupState extends State<AddEventPopup> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text('Add Event'),
-      content: SingleChildScrollView(
-        child: SizedBox(
-          height: MediaQuery.of(context).size.height * 0.5,
-          child: Column(
-            children: [
-              TextField(
-                controller: _titleController,
-                decoration: InputDecoration(labelText: 'Event Title'),
-              ),
-              SizedBox(height: 15),
-              TextField(
-                controller: _descriptionController,
-                decoration: InputDecoration(labelText: 'Event description'),
-              ),
-              SizedBox(height: 20),
-              TextButton.icon(
-                icon: Icon(Icons.date_range),
-                label: Text(
-                  _startDate == null || _endDate == null
-                      ? 'Select Date Range'
-                      : '${_startDate!.toLocal().toString().split(' ')[0]} → ${_endDate!.toLocal().toString().split(' ')[0]}',
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: AlertDialog(
+        insetPadding: EdgeInsets.zero,
+
+        title: widget.editFlag ? Text('Update Event') : Text('Add Event'),
+        content: SingleChildScrollView(
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height * 0.5,
+            child: Column(
+              children: [
+                TextField(
+                  controller: _titleController,
+                  decoration: InputDecoration(
+                    labelText: 'Event Title',
+                    border: OutlineInputBorder(), // <-- Add border
+                  ),
                 ),
-                onPressed: _pickDateRange,
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextButton.icon(
-                      icon: const Icon(Icons.access_time),
-                      label: Text(
-                        _startTime == null
-                            ? 'Start Time'
-                            : _startTime!.format(context),
-                      ),
-                      onPressed: _pickStartTime,
-                    ),
+                SizedBox(height: 15),
+                TextField(
+                  controller: _descriptionController,
+                  decoration: InputDecoration(
+                    labelText: 'Event description',
+                    border: OutlineInputBorder(), // <-- Add border
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: TextButton.icon(
-                      icon: const Icon(Icons.access_time),
-                      label: Text(
-                        _endTime == null
-                            ? 'End Time'
-                            : _endTime!.format(context),
-                      ),
-                      onPressed: _pickEndTime,
-                    ),
+                  maxLines: 4, // <-- Set to 4 lines
+                ),
+                SizedBox(height: 20),
+                TextButton.icon(
+                  icon: Icon(Icons.date_range),
+                  label: Text(
+                    _startDate == null || _endDate == null
+                        ? 'Select Date Range'
+                        : '${_startDate!.toLocal().toString().split(' ')[0]} → ${_endDate!.toLocal().toString().split(' ')[0]}',
                   ),
-                ],
-              ),
-            ],
+                  onPressed: _pickDateRange,
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton.icon(
+                        icon: const Icon(Icons.access_time),
+                        label: Text(
+                          _startTime == null
+                              ? 'Start Time'
+                              : _startTime!.format(context),
+                        ),
+                        onPressed: _pickStartTime,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextButton.icon(
+                        icon: const Icon(Icons.access_time),
+                        label: Text(
+                          _endTime == null
+                              ? 'End Time'
+                              : _endTime!.format(context),
+                        ),
+                        onPressed: _pickEndTime,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
+        actions: [
+          TextButton(
+            onPressed: Navigator.of(context).pop,
+            child: Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: _submit,
+            child: Text(widget.editFlag ? 'Update' : 'Add'),
+          ),
+        ],
       ),
-      actions: [
-        TextButton(onPressed: Navigator.of(context).pop, child: Text("Cancel")),
-        ElevatedButton(
-          onPressed: _submit,
-          child: Text(widget.editFlag ? 'Update' : 'Add'),
-        ),
-      ],
     );
   }
 }
