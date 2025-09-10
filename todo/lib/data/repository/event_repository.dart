@@ -11,7 +11,7 @@ class EventRepository {
   }
 
   Future<List<EventData>> getAllFavEvents() {
-    return _db.getAllEvents();
+    return _db.getAllFavorites();
   }
 
   Future<List<EventData>> getAllBookedEvents() {
