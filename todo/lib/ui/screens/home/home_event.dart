@@ -49,3 +49,8 @@ class SwitchUserEvent extends HomeEvent {
   final AppUser user;
   SwitchUserEvent(this.user);
 }
+
+class SearchEvents extends HomeEvent {
+  final String query;
+  SearchEvents(this.query);
+}

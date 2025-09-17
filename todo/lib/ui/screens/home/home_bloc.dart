@@ -21,6 +21,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     on<ToggleFavoriteEvent>(_onToggleFavorite);
     on<SwitchUserEvent>(_onSwitchUser);
     on<ToggleBookingEvent>(_onToggleBooking);
+    // on<SearchEvents>(_onSearchEvents);
   }
   final List<CalendarEvent<EventData>> _events = [];
   void _onLoadEvents(LoadEvents event, Emitter<HomeState> emit) async {
@@ -54,7 +55,16 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
             );
           }).toList();
     } else {
-      finalEventdata = saveData;
+      final allFavEvents = await repository.getAllFavEvents();
+      final allBookedEvents = await repository.getAllBookedEvents();
+      finalEventdata =
+          saveData.map((e) {
+            final favCount = allFavEvents.where((fav) => fav.id == e.id).length;
+            final bookCount =
+                allBookedEvents.where((booked) => booked.id == e.id).length;
+
+            return e.copyWith(favoriteCount: favCount, bookCount: bookCount);
+          }).toList();
     }
 
     _events.clear();
@@ -120,4 +130,17 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     );
     add(LoadEvents(userId: event.userId));
   }
+
+  // void _onSearchEvents(SearchEvents event, Emitter<HomeState> emit) {
+  //   final query = event.query.toLowerCase();
+  //   final filteredEvents =
+  //       _events.where((calendarEvent) {
+  //         final title = calendarEvent.data?.title.toLowerCase() ?? '';
+  //         final description =
+  //             calendarEvent.data?.description?.toLowerCase() ?? '';
+  //         return title.contains(query) || description.contains(query);
+  //       }).toList();
+
+  //   emit(CalendarLoaded(filteredEvents));
+  // }
 }

@@ -15,7 +15,7 @@ class EventRepository {
   }
 
   Future<List<EventData>> getAllBookedEvents() {
-    return _db.getAllEvents();
+    return _db.getAllBookings();
   }
 
   Future<EventData> getEventById(int id) {
