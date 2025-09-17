@@ -165,38 +165,6 @@ class EventDatabase {
     }
   }
 
-  // Future<void> updateEventStatus({
-  //   required String userId,
-  //   required int eventId,
-  //   bool? isFavorite,
-  //   bool? isBooked,
-  // }) async {
-  //   final db = await database;
-
-  //   // Get current values if exists
-  //   final result = await db.query(
-  //     'user_event_status',
-  //     where: 'user_id = ? AND event_id = ?',
-  //     whereArgs: [userId, eventId],
-  //   );
-
-  //   int currentFavorite = 0;
-  //   int currentBooked = 0;
-
-  //   if (result.isNotEmpty) {
-  //     currentFavorite = result.first['is_favorite'] as int;
-  //     currentBooked = result.first['is_booked'] as int;
-  //   }
-
-  //   await db.insert('user_event_status', {
-  //     'user_id': userId,
-  //     'event_id': eventId,
-  //     'is_favorite':
-  //         isFavorite != null ? (isFavorite ? 1 : 0) : currentFavorite,
-  //     'is_booked': isBooked != null ? (isBooked ? 1 : 0) : currentBooked,
-  //   }, conflictAlgorithm: ConflictAlgorithm.replace);
-  // }
-
   Future<void> editEvent(EventData event) async {
     final db = await database;
     await db.update(

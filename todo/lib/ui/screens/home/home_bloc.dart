@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:kalender/kalender.dart';
@@ -28,8 +26,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   void _onLoadEvents(LoadEvents event, Emitter<HomeState> emit) async {
     var finalEventdata;
     final saveData = await repository.getAllEvents();
-    final allFavEvents = await repository.getAllFavEvents();
-    final allBookedEvents = await repository.getAllBookedEvents();
 
     if (event.userId != '') {
       final userFavevent = await repository.getUserFavorites(event.userId);
@@ -43,16 +39,12 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
               bookFlag: isBooked ? 1 : 0,
               favoriteCount:
                   isFav
-                      ? (e.favoriteCount ?? 0) + 1
-                      : (e.favoriteCount != null && e.favoriteCount! > 0
-                          ? e.favoriteCount! - 1
-                          : 0),
+                      ? (e.favoriteCount) + 1
+                      : (e.favoriteCount > 0 ? e.favoriteCount - 1 : 0),
               bookCount:
                   isBooked
-                      ? (e.bookCount ?? 0) + 1
-                      : (e.bookCount != null && e.bookCount! > 0
-                          ? e.bookCount! - 1
-                          : 0),
+                      ? (e.bookCount) + 1
+                      : (e.bookCount! > 0 ? e.bookCount! - 1 : 0),
               color:
                   isFav
                       ? Colors.redAccent
