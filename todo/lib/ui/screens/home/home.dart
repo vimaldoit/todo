@@ -1,5 +1,7 @@
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
+import 'package:todo/ui/screens/home/widgets/banner_section.dart';
 import 'package:todo/utils/colors.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -7,6 +9,10 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    List<String> offersList = [
+      'https://images.unsplash.com/photo-1520342868574-5fa3804e551c?ixlib=rb-0.3.5&ixid=eyJhcHBfaWQiOjEyMDd9&s=6ff92caffcdd63681a35134a6770ed3b&auto=format&fit=crop&w=1951&q=80',
+      'https://images.unsplash.com/photo-1522205408450-add114ad53fe?ixlib=rb-0.3.5&ixid=eyJhcHBfaWQiOjEyMDd9&s=368f45b0888aeb0b7b08e3a1084d3ede&auto=format&fit=crop&w=1950&q=80',
+    ];
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -134,10 +140,43 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
             ),
-            Column(children: [
-
-          ],
-        ),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+              child: Column(
+                children: [
+                  //   BannerSec(),
+                  CarouselSlider(
+                    options: CarouselOptions(
+                      height: 160,
+                      autoPlay: true,
+                      enlargeCenterPage: false,
+                      viewportFraction: 1.0,
+                    ),
+                    items: List<Widget>.generate(offersList.length, (
+                      int index,
+                    ) {
+                      var testimonial = offersList[index];
+                      return Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Image.network(
+                              testimonial,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
